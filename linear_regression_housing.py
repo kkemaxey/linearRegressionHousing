@@ -28,34 +28,35 @@ theta_0 = Ybar - theta_1*Xbar
 #this is using machine learning to iterate through
 w = 0.0
 b = 0.0
-learning_rate = 0.01
+learning_rate = 0.024
 epochs = 100
 
 split_ratio = 0.8
 split_index = int(len(X) * split_ratio)
 indices = nump.random.permutation(len(X))
 
-X_shuffled = X[indices]
+x_shuffled = X[indices]
 y_shuffled = Y[indices]
-X_train, X_test = X_shuffled[:split_index], X_shuffled[split_index:]
+x_train, x_test = x_shuffled[:split_index], x_shuffled[split_index:]
 y_train, y_test = y_shuffled[:split_index], y_shuffled[split_index:]
 
 n = float(len(X_train))
 
 for epoch in range(epochs):
-    y_pred = w*X_train + b
+    y_pred = w*x_train + b
     cost = (1/(2*n))*sum((y_train-y_pred)**2)
-    dw = -(2/n)*sum(X_train*(y_train-y_pred))
+    dw = -(2/n)*sum(x_train*(y_train-y_pred))
     db = -(2/n)*sum(y_train-y_pred)
     w = w - learning_rate*dw
     b = b - learning_rate*db
-
-    if epoch % 100 == 0:
-      print(f'Epoch {epoch+1}/{epochs}, Cost: {cost}, w: {w}, b: {b}')
+    
+    print('Epoch {}, cost {}, m grad {}, b grad {}'.format(epoch, '%.3g' % cost,'%.3g' % dw, '%.3g' % db, '%.3g'))
+ #   if epoch % 100 == 0:
+  #    print(f'Epoch {epoch+1}/{epochs}, Cost: {cost}, w: {w}, b: {b}')
 
 print(f'Final Cost: {cost}, w: {w}, b: {b}')
-print(f'Predicted Y values (on training data): {y_pred}')
-print(f'Actual Y values (on training data): {y_train}')
+#print(f'Predicted Y values (on training data): {y_pred}')
+#print(f'Actual Y values (on training data): {y_train}')
 print(f'Final Weights: {w}')
 print(f'Final Bias: {b}')
 
