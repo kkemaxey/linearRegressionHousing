@@ -29,7 +29,7 @@ theta_0 = Ybar - theta_1*Xbar
 w = 0.0
 b = 0.0
 learning_rate = 0.024
-epochs = 100
+epochs = 25000
 
 split_ratio = 0.8
 split_index = int(len(X) * split_ratio)
@@ -40,7 +40,7 @@ y_shuffled = Y[indices]
 x_train, x_test = x_shuffled[:split_index], x_shuffled[split_index:]
 y_train, y_test = y_shuffled[:split_index], y_shuffled[split_index:]
 
-n = float(len(X_train))
+n = float(len(x_train))
 
 for epoch in range(epochs):
     y_pred = w*x_train + b
@@ -66,7 +66,7 @@ plt.figure(figsize=(10, 6))
 plt.scatter(X, Y, alpha=0.7, label='Actual Data')
 Y_pred = theta[0] + theta[1] * X
 
-plt.plot(X, Y_pred, color='red', linewidth=2, label=f'Regression Line: Y = {theta[0]:.2f} + {theta[1]:.2f}X')
+plt.plot(X, Y_pred, color='red', linewidth=2, label=f'Regression Line: Y = {theta[1]:.2f}X + {theta[0]:.2f}')
 plt.title('Scatter Plot with Regression Line (Normal Formula Method)')
 plt.xlabel('Number of Rooms (RM)')
 plt.ylabel('Median Home Value (MEDV)')
@@ -79,7 +79,7 @@ yline = theta_0 + theta_1*xline
 
 plt.figure(figsize=(10, 6))
 plt.scatter(X, Y, alpha=0.7, label='Actual Data')
-plt.plot(xline, yline, color='black', linewidth=2, label=f'Regression Line: Y = {theta_0:.2f} + {theta_1:.2f}X')
+plt.plot(xline, yline, color='black', linewidth=2, label=f'Regression Line: Y = {theta_1:.2f}X + {theta_0:.2f}')
 plt.title('Scatter Plot with Regression Line (Probability and Statistics Method)')
 plt.xlabel('Number of Rooms (RM)')
 plt.ylabel('Median Home Value (MEDV)')
@@ -98,3 +98,11 @@ plt.ylabel('Median Home Value (MEDV)')
 plt.grid(True)
 plt.legend()
 plt.savefig('linearreg_ml.png')
+
+
+#Saving the model
+#nump.savetxt('model_weight.txt', w)
+#nump.savetxt('model_bias', b)
+
+nump.savez('linear_regression4.npz', weight=w, bias=b)
+print("Model saved Successfully")
