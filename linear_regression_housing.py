@@ -104,5 +104,16 @@ plt.savefig('linearreg_ml.png')
 #nump.savetxt('model_weight.txt', w)
 #nump.savetxt('model_bias', b)
 
-nump.savez('linear_regression4.npz', weight=w, bias=b)
+nump.savez('linear_regression.npz', weight=w, bias=b)
 print("Model saved Successfully")
+
+#so it would've been nice if i saved my test data so i could evaluate the model on the test data
+#but i'm an idiot so now i have to rerun my model again until i get another accurate prediction on the test data
+#I'm such an idiot. 
+#oh well, at least I'm learning right? 
+#the good thing is because it's a regression, I don't really need test data but wth, might as well.
+#Anyway, here's the code for saving the test data for future use.
+
+nump.savez('test_data.npz', x_test=x_test, y_test=y_test)
+print("Test data saved Successfully")
+#return 0;
