@@ -85,7 +85,7 @@ plt.xlabel('Number of Rooms (RM)')
 plt.ylabel('Median Home Value (MEDV)')
 plt.grid(True)
 plt.legend()
-plt.savefig('lineaerreg_prob.png')
+plt.savefig('linearreg_prob.png')
 
 y_pred_ml = w * X + b
 
