@@ -1,4 +1,3 @@
-#import torch
 import numpy as nump
 import pandas as pand
 import matplotlib.pyplot as plt
@@ -26,10 +25,10 @@ theta_1 = cov[0,1]/(X.var())
 theta_0 = Ybar - theta_1*Xbar
 
 #this is using machine learning to iterate through
-w = 0.0
-b = 0.0
-learning_rate = 0.024
-epochs = 25000
+w = nump.random.rand()
+b = nump.random.rand()
+learning_rate = 0.02
+epochs = 1000
 
 split_ratio = 0.8
 split_index = int(len(X) * split_ratio)
@@ -42,14 +41,28 @@ y_train, y_test = y_shuffled[:split_index], y_shuffled[split_index:]
 
 n = float(len(x_train))
 
+
 for epoch in range(epochs):
     y_pred = w*x_train + b
     cost = (1/(2*n))*sum((y_train-y_pred)**2)
-    dw = -(2/n)*sum(x_train*(y_train-y_pred))
-    db = -(2/n)*sum(y_train-y_pred)
+    dw = -(1/n)*sum(x_train*(y_train-y_pred))
+    db = -(1/n)*sum(y_train-y_pred)
     w = w - learning_rate*dw
     b = b - learning_rate*db
     
+    if epoch % 250 == 0:
+        x = x + 1
+        plt.figure(figsize=(10, 6))
+        plt.scatter(X, Y, alpha=0.7, label='Actual Data')
+        plt.plot(X, y_pred_ml, color='blue', linewidth=2, label=f'Regression Line: Y = {w:.2f}X + {b:.2f}')
+        plt.title('Scatter Plot with Regression Line (Machine Learning Method)')
+        plt.xlabel('Number of Rooms (RM)')
+        plt.ylabel('Median Home Value (MEDV)')
+        plt.grid(True)
+        plt.legend()
+        plt.savefig('linearreg_ml_v{x}.png')
+
+
     print('Epoch {}, cost {}, m grad {}, b grad {}'.format(epoch, '%.3g' % cost,'%.3g' % dw, '%.3g' % db, '%.3g'))
  #   if epoch % 100 == 0:
   #    print(f'Epoch {epoch+1}/{epochs}, Cost: {cost}, w: {w}, b: {b}')
