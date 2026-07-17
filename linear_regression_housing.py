@@ -27,8 +27,8 @@ theta_0 = Ybar - theta_1*Xbar
 #this is using machine learning to iterate through
 w = nump.random.rand()
 b = nump.random.rand()
-learning_rate = 0.02
-epochs = 1000
+learning_rate = 0.025
+epochs = 10000
 
 split_ratio = 0.8
 split_index = int(len(X) * split_ratio)
@@ -40,7 +40,7 @@ x_train, x_test = x_shuffled[:split_index], x_shuffled[split_index:]
 y_train, y_test = y_shuffled[:split_index], y_shuffled[split_index:]
 
 n = float(len(x_train))
-
+version = 0
 
 for epoch in range(epochs):
     y_pred = w*x_train + b
@@ -49,19 +49,21 @@ for epoch in range(epochs):
     db = -(1/n)*sum(y_train-y_pred)
     w = w - learning_rate*dw
     b = b - learning_rate*db
-    
-    if epoch % 250 == 0:
-        x = x + 1
+    if epoch % 1000 == 0:
+        version += 1
+        line_x = nump.array([X.min(), X.max()])
+        line_y = w*line_x + b
         plt.figure(figsize=(10, 6))
         plt.scatter(X, Y, alpha=0.7, label='Actual Data')
-        plt.plot(X, y_pred_ml, color='blue', linewidth=2, label=f'Regression Line: Y = {w:.2f}X + {b:.2f}')
+        plt.plot(line_x, line_y, color='blue', linewidth=2,
+                 label=f'Regression Line: Y = {w:.2f}X + {b:.2f}')
         plt.title('Scatter Plot with Regression Line (Machine Learning Method)')
         plt.xlabel('Number of Rooms (RM)')
         plt.ylabel('Median Home Value (MEDV)')
         plt.grid(True)
         plt.legend()
-        plt.savefig('linearreg_ml_v{x}.png')
-
+        plt.savefig(f'ml_progression/linearreg_ml_v{version}.png')
+        plt.close()
 
     print('Epoch {}, cost {}, m grad {}, b grad {}'.format(epoch, '%.3g' % cost,'%.3g' % dw, '%.3g' % db, '%.3g'))
  #   if epoch % 100 == 0:
