@@ -13,7 +13,6 @@ a = nump.matmul(nump.transpose(Xcon), Xcon)
 b = nump.matmul(nump.transpose(Xcon), Y)
 theta = nump.matmul(nump.linalg.inv(a), b)
 
-
 #this is used to calculate the line using the probability
 #the slope = covariance(x,y)/var(x)
 #the y-intercept = y.mean - slope*x.mean
@@ -21,7 +20,8 @@ Xbar = X.mean()
 Ybar = Y.mean()
 
 cov = nump.cov(X,Y)
-theta_1 = cov[0,1]/(X.var())
+theta_1 = nump.cov(X, Y, ddof=0)[0,1] / X.var()
+#theta_1 = cov[0,1]/(X.var())
 theta_0 = Ybar - theta_1*Xbar
 
 #this is using machine learning to iterate through
@@ -62,16 +62,12 @@ for epoch in range(epochs):
         plt.ylabel('Median Home Value (MEDV)')
         plt.grid(True)
         plt.legend()
-        plt.savefig(f'ml_progression/linearreg_ml_v{version}.png')
+        plt.savefig(f'Scatter_Plots/ML_Progression/linearreg_ml_v{version}.png')
         plt.close()
 
-    print('Epoch {}, cost {}, m grad {}, b grad {}'.format(epoch, '%.3g' % cost,'%.3g' % dw, '%.3g' % db, '%.3g'))
- #   if epoch % 100 == 0:
-  #    print(f'Epoch {epoch+1}/{epochs}, Cost: {cost}, w: {w}, b: {b}')
+    print('Epoch {}, cost {}, m grad {}, b grad {}'.format(epoch, '%.3g' % cost,'%.3g' % dw, '%.3g' % db))
 
 print(f'Final Cost: {cost}, w: {w}, b: {b}')
-#print(f'Predicted Y values (on training data): {y_pred}')
-#print(f'Actual Y values (on training data): {y_train}')
 print(f'Final Weights: {w}')
 print(f'Final Bias: {b}')
 
@@ -87,7 +83,7 @@ plt.xlabel('Number of Rooms (RM)')
 plt.ylabel('Median Home Value (MEDV)')
 plt.grid(True)
 plt.legend()
-plt.savefig('linearreg_normal.png')
+plt.savefig('Scatter_Plots/linearreg_normal.png')
 
 xline = nump.linspace(X.min(), X.max(), 100)
 yline = theta_0 + theta_1*xline
@@ -100,7 +96,7 @@ plt.xlabel('Number of Rooms (RM)')
 plt.ylabel('Median Home Value (MEDV)')
 plt.grid(True)
 plt.legend()
-plt.savefig('linearreg_prob.png')
+plt.savefig('Scatter_Plots/linearreg_prob.png')
 
 y_pred_ml = w * X + b
 
@@ -112,23 +108,12 @@ plt.xlabel('Number of Rooms (RM)')
 plt.ylabel('Median Home Value (MEDV)')
 plt.grid(True)
 plt.legend()
-plt.savefig('linearreg_ml.png')
-
+plt.savefig('Scatter_Plots/linearreg_ml.png')
 
 #Saving the model
-#nump.savetxt('model_weight.txt', w)
-#nump.savetxt('model_bias', b)
 
-nump.savez('linear_regression.npz', weight=w, bias=b)
+nump.savez('ML_Model/linear_regression.npz', weight=w, bias=b)
 print("Model saved Successfully")
-
-#so it would've been nice if i saved my test data so i could evaluate the model on the test data
-#but i'm an idiot so now i have to rerun my model again until i get another accurate prediction on the test data
-#I'm such an idiot. 
-#oh well, at least I'm learning right? 
-#the good thing is because it's a regression, I don't really need test data but wth, might as well.
-#Anyway, here's the code for saving the test data for future use.
-
-nump.savez('test_data.npz', x_test=x_test, y_test=y_test)
+nump.savez('ML_Model/test_data.npz', x_test=x_test, y_test=y_test)
 print("Test data saved Successfully")
 #return 0;
