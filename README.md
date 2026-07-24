@@ -1,111 +1,136 @@
 # Comparing Three Implementations of Linear Regression
 
-This project implements and compares three approaches to solving a linear regression problem:
+A from-scratch comparison of three approaches to solving the same linear regression problem:
 
-1. **Statistical regression using covariance and variance**
-2. **The normal equation using matrix operations**
-3. **Gradient descent implemented from scratch**
+* **Statistical estimation** using covariance and variance
+* **Closed-form linear algebra** using the normal equation
+* **Iterative optimization** using gradient descent
 
-All three approaches are applied to the same simple linear regression problem using the **RM** feature from the Boston Housing dataset to predict **MEDV**, the median home value in thousands of dollars.
-
-The purpose of this project is not to build the most accurate housing price predictor. Instead, it is to understand how different mathematical and computational approaches solve the same regression problem and how their performance and scalability differ.
+The goal was to understand how these approaches differ in implementation, computational complexity, scalability, and numerical behavior.
 
 ---
 
-## Project Overview
+## TL;DR
 
-The underlying model for each implementation is:
+All three implementations converge to essentially the same linear regression solution:
 
-$$
-y = mx + b
-$$
+| Method                | Slope | Intercept |
+| --------------------- | ----: | --------: |
+| Covariance / Variance | ~9.10 |   ~-34.67 |
+| Normal Equation       | ~9.10 |   ~-34.67 |
+| Gradient Descent      | ~9.11 |   ~-34.67 |
 
-where:
+The gradient descent implementation converged to within approximately **0.1%** of the analytical solutions.
 
-* $x$ = average number of rooms per dwelling (`RM`)
-* $y$ = median home value (`MEDV`)
-* $m$ = slope
-* $b$ = y-intercept
+### Main conclusion
 
-Each method attempts to determine the values of $m$ and $b$ that best fit the data.
+For this low-dimensional problem, the closed-form methods are the most direct solution.
 
-The project intentionally uses only one feature to keep the mathematical comparison between the three implementations clear and tractable.
+Gradient descent requires significantly more computation for this specific dataset, but its iterative optimization approach becomes more attractive as the number of features and problem dimensionality increase.
 
 ---
 
-## Methods
+## Why I Built This
 
-### 1. Statistical Approach
+Linear regression is often introduced through a library call:
 
-The first implementation calculates the slope using the relationship between covariance and variance:
+```python
+model.fit(X, y)
+```
+
+This project was an attempt to understand what happens underneath that abstraction.
+
+Rather than using a prebuilt regression implementation, I implemented three approaches to the same problem and compared how each one:
+
+* calculates model parameters
+* scales with input size
+* uses memory
+* converges to a solution
+* behaves as the dimensionality of the problem changes
+
+The goal was to compare **algorithms and implementation strategies**, not to build a production housing-price predictor.
+
+---
+
+## Problem
+
+The model uses a single feature from the Boston Housing dataset:
+
+* **Input (`RM`)**: average number of rooms per dwelling
+* **Target (`MEDV`)**: median home value, measured in thousands of dollars
+
+The model is:
+
+$$
+\hat{y} = wx + b
+$$
+
+The one-feature restriction was intentional. It makes it possible to compare the mathematical approaches directly while keeping the underlying regression problem easy to inspect.
+
+---
+
+## Implementations
+
+### 1. Covariance / Variance
+
+The slope is calculated directly:
 
 $$
 m = \frac{\text{Cov}(x,y)}{\text{Var}(x)}
 $$
 
-The intercept is then calculated using:
+The intercept is then:
 
 $$
-b = \bar{y} - m\bar{x}
+b = \bar{y} - w\bar{x}
 $$
 
-This approach directly computes the parameters of the best-fit line using statistical properties of the dataset.
+This produces the least-squares solution directly for the single-feature problem.
 
 **Complexity:**
 
-* Time: $O(n)$
-* Space: $O(1)$
-
-where $n$ is the number of data points.
+* Time: `O(n)`
+* Additional space: `O(1)`
 
 ---
 
-### 2. Matrix Approach
+### 2. Normal Equation
 
-The second implementation uses the normal equation:
+The second implementation uses the closed-form matrix solution:
 
 $$
 \theta = (X^TX)^{-1}X^Ty
 $$
 
-The feature matrix is augmented with a column of ones to account for the intercept.
+The input matrix is augmented with a column of ones to represent the intercept.
 
-The resulting parameter vector contains:
+This approach demonstrates how linear regression can be represented as a linear algebra problem.
 
-$$
-\theta =
-\begin{bmatrix}
-b \
-m
-\end{bmatrix}
-$$
+For the current implementation, the number of features is constant, so the dominant cost scales linearly with the number of samples.
 
-This approach demonstrates how linear regression can be expressed as a system of matrix operations.
+**Complexity for this implementation:**
 
-For this implementation, the model contains one feature plus the intercept term, so the feature dimension remains constant.
+* Time: `O(n)`
+* Space: `O(n)`
 
-**Complexity as implemented:**
+**Scaling consideration:**
 
-* Time: $O(n)$ when the feature dimension is constant
-* Space: $O(n)$
-
-For a generalized implementation with $d$ features, the matrix operations become increasingly expensive as $d$ grows.
+As the number of features increases, matrix operations become increasingly expensive. Explicit matrix inversion also introduces numerical-stability concerns, making direct linear solves or decompositions preferable in production numerical code.
 
 ---
 
-### 3. Machine Learning Approach: Gradient Descent
+### 3. Gradient Descent
 
-The third implementation learns the slope and intercept iteratively using gradient descent.
+The final implementation learns the parameters iteratively.
 
-The model begins with initial values for the weight and bias and repeatedly performs the following steps:
+Each epoch:
 
-1. Generate predictions
-2. Calculate the model's error
-3. Calculate the gradients
-4. Update the weight and bias
-5. Repeat for a fixed number of epochs
+1. Generates predictions
+2. Calculates the loss
+3. Computes the gradients
+4. Updates the weight and bias
 
-The cost function is Mean Squared Error:
+The objective is Mean Squared Error:
 
 $$
 L(w,b) =
@@ -117,182 +142,199 @@ $$
 The parameters are updated using:
 
 $$
-w = w - \epsilon \frac{\partial L}{\partial w}
+w \leftarrow w - \alpha \frac{\partial L}{\partial w}
 $$
 
 $$
-b = b - \epsilon \frac{\partial L}{\partial b}
+b \leftarrow b - \alpha \frac{\partial L}{\partial b}
 $$
 
-The implementation uses:
+Configuration:
 
 * Learning rate: `0.025`
 * Epochs: `10,000`
-* Training/test split: `80/20`
+* Training split: `80%`
+* Test split: `20%`
 
 **Complexity:**
 
-* Time: $O(nk)$
-* Space: $O(n)$
+* Time: `O(nk)`
+* Space: `O(n)`
 
 where:
 
-* $n$ = number of training samples
-* $k$ = number of training epochs
+* `n` = number of training samples
+* `k` = number of epochs
 
 ---
 
 ## Results
 
-The three implementations converged to nearly identical regression parameters:
+The analytical approaches produced effectively identical solutions.
 
-| Method           | Slope | Intercept |
-| ---------------- | ----: | --------: |
-| Statistical      | ~9.10 |   ~-34.67 |
-| Matrix           | ~9.10 |   ~-34.67 |
-| Gradient Descent | ~9.11 |   ~-34.67 |
+Gradient descent converged to a nearly identical solution after iterative optimization:
 
-The gradient descent implementation converged to a solution within approximately **0.1%** of the analytical solutions.
+```text
+Analytical slope:       ~9.10
+Gradient descent slope: ~9.11
+```
 
-This result demonstrates that gradient descent can successfully approximate the same regression solution produced directly by the statistical and matrix-based methods.
+The difference was approximately **0.1%**.
+
+This validates that the gradient descent implementation is optimizing the same underlying least-squares objective as the closed-form solutions.
 
 ---
 
-## Model Evaluation
+## Model Performance
 
-The gradient descent model was evaluated using:
+Using the gradient descent implementation:
 
-* **R²**
-* **Root Mean Squared Error (RMSE)**
+| Metric | Result |
+| ------ | -----: |
+| R²     | ~0.419 |
+| RMSE   |   ~6.8 |
 
-The model achieved approximately:
+The model explains approximately **42% of the variance** in median home value using only the average number of rooms as an input.
 
-* **R²:** `0.419`
-* **RMSE:** `6.8`
+The RMSE corresponds to approximately **$6,800** in the dataset's units.
 
-Because MEDV is measured in thousands of dollars, the RMSE corresponds to an average prediction error of approximately **$6,800**.
-
-The R² value indicates that the model explains approximately **42% of the variance** in median home value using only the average number of rooms as a feature.
-
-This result is expected to be limited because housing prices depend on many variables beyond the number of rooms.
+The relatively limited predictive performance is expected. Housing prices depend on substantially more than the number of rooms in a property.
 
 ---
 
 ## Complexity Comparison
 
-| Method           | Time Complexity                       | Space Complexity |
-| ---------------- | ------------------------------------- | ---------------- |
-| Statistical      | $O(n)$                                | $O(1)$           |
-| Matrix           | $O(n)$ for constant feature dimension | $O(n)$           |
-| Gradient Descent | $O(nk)$                               | $O(n)$           |
+| Method                | Time    | Space  | Solution  |
+| --------------------- | ------- | ------ | --------- |
+| Covariance / Variance | `O(n)`  | `O(1)` | Direct    |
+| Normal Equation       | `O(n)`* | `O(n)` | Direct    |
+| Gradient Descent      | `O(nk)` | `O(n)` | Iterative |
 
-For this specific one-feature implementation, all three approaches are approximately linear with respect to the number of samples.
+*For the current implementation with a constant number of features.
 
-However, their scalability differs as the number of features increases.
+The most important result is that the complexity comparison changes as the problem dimension changes.
 
-### Analytical methods
+For this project:
 
-The normal equation requires operations involving:
+```text
+number of features = 1
+```
 
-$$
-(X^TX)^{-1}
-$$
+Therefore, the matrix-based methods appear approximately linear with respect to the number of samples.
 
-As the number of features grows, matrix inversion becomes increasingly expensive.
+For higher-dimensional problems, the tradeoff becomes more significant:
 
-The generalized computational complexity is dominated by the number of features rather than simply the number of data points.
-
-### Gradient descent
-
-Gradient descent avoids explicitly inverting a potentially large feature matrix.
-
-Its computational cost scales with both:
-
-* the number of training samples
-* the number of optimization iterations
-
-This makes iterative optimization more attractive for problems with many features, although it introduces additional considerations such as:
-
-* learning rate selection
-* convergence
-* number of iterations
-* initialization
+* Closed-form methods perform increasingly expensive matrix operations.
+* Gradient descent trades exact computation for iterative optimization.
+* Gradient descent introduces additional concerns around convergence and hyperparameter selection.
 
 ---
 
-## Key Takeaways
+## Engineering Tradeoffs
 
-This project demonstrated several important differences between analytical and iterative approaches to linear regression.
+### Closed-form methods
 
-### Closed-form methods are efficient for low-dimensional problems
+**Advantages**
 
-For a problem with only one feature, the statistical and matrix methods can calculate the solution directly and efficiently.
+* Direct solution
+* No learning-rate tuning
+* No convergence loop
+* Efficient for small feature spaces
 
-Running 10,000 gradient descent epochs to reach a solution that can be computed analytically in a single calculation is unnecessary for this specific problem.
+**Disadvantages**
 
-### Gradient descent is more flexible for larger problems
+* Matrix operations become expensive as dimensionality increases
+* Explicit inversion can introduce numerical instability
+* Memory requirements can grow significantly
 
-The advantage of gradient descent becomes more apparent as the number of features increases.
+### Gradient descent
 
-Rather than directly calculating a matrix inverse, gradient descent iteratively optimizes the model parameters.
+**Advantages**
 
-This can make it more practical for higher-dimensional problems, although the tradeoff is additional iteration and hyperparameter tuning.
+* Avoids explicitly computing a matrix inverse
+* Scales naturally with the number of training examples and optimization steps
+* Extensible to larger and more complex optimization problems
 
-### Different implementations can solve the same mathematical problem
+**Disadvantages**
 
-The three methods appear different at the implementation level, but they are ultimately optimizing the same underlying least-squares regression objective.
+* Requires hyperparameter selection
+* Requires an iterative convergence process
+* Can converge slowly or fail to converge with poor configuration
 
-The main difference is how they reach the solution:
+---
 
-* The statistical method derives the parameters directly from covariance and variance.
-* The matrix method expresses the solution using linear algebra.
-* Gradient descent approximates the solution through iterative optimization.
+## What I Would Improve
+
+This experiment exposed several weaknesses in the initial implementation.
+
+### 1. Standardize the experimental setup
+
+The analytical methods use the full dataset, while gradient descent uses an 80/20 split.
+
+A stronger comparison would evaluate all three methods using the same:
+
+* training set
+* test set
+* evaluation metrics
+
+This would separate implementation differences from differences caused by the data each method receives.
+
+### 2. Replace explicit matrix inversion
+
+The current normal-equation implementation directly computes:
+
+```text
+(XᵀX)⁻¹
+```
+
+A production-oriented implementation should prefer solving the linear system directly or using a numerically stable decomposition such as QR or SVD.
+
+### 3. Add convergence-based stopping
+
+The gradient descent implementation currently trains for a fixed number of epochs.
+
+A stronger implementation would stop when the change in loss falls below a defined tolerance.
+
+### 4. Improve test coverage
+
+The implementations should be tested against:
+
+* known synthetic datasets
+* constant inputs
+* small datasets
+* degenerate inputs
+* comparisons against a trusted reference implementation
+
+### 5. Generalize the model interface
+
+The next version would separate:
+
+* data loading
+* model implementations
+* evaluation
+* visualization
+* experiment configuration
+
+This would make it easier to extend the project to multiple features and additional optimization methods.
 
 ---
 
 ## Limitations
 
-This project has several important limitations.
+This project is primarily an implementation and algorithm-comparison exercise.
 
-### Single-feature model
+The results should not be interpreted as a modern housing-market analysis.
 
-The model only uses `RM`, the average number of rooms per dwelling.
+Important limitations include:
 
-Housing prices are influenced by many other factors, including:
+* The model uses only one feature.
+* The dataset contains only 506 samples.
+* The Boston Housing dataset is historically derived and has documented ethical concerns.
+* The gradient descent hyperparameters were selected experimentally.
+* The three methods were not initially evaluated using identical train/test procedures.
+* The normal-equation implementation uses explicit matrix inversion.
 
-* location
-* crime rates
-* accessibility
-* property characteristics
-* tax rates
-* socioeconomic factors
-
-The relatively low R² score reflects the limitations of using a single feature.
-
-### Different training procedures
-
-The analytical methods use the full dataset, while the gradient descent implementation uses an 80/20 train/test split.
-
-As a result, the experimental comparison is not perfectly identical between methods.
-
-A stronger experimental design would compare:
-
-1. All three methods using the same training data
-2. All three methods using the same test data for evaluation
-
-### Dataset limitations
-
-The Boston Housing dataset contains only 506 samples and originates from the 1970 U.S. Census.
-
-The dataset has also been deprecated from `scikit-learn` because of ethical concerns surrounding one of its features.
-
-It is used in this project strictly as a benchmark dataset for comparing regression implementations and computational methods—not as a basis for modern housing-market conclusions.
-
-### Gradient descent hyperparameters
-
-The learning rate and number of epochs were selected experimentally.
-
-The implementation does not currently use an automatic convergence criterion or systematic hyperparameter search.
+These limitations are important because the goal of the project is to understand the computational approaches, not to make real-world predictions about housing prices.
 
 ---
 
@@ -301,9 +343,9 @@ The implementation does not currently use an automatic convergence criterion or 
 ```text
 .
 ├── ML_Model/
-│   └── Saved model parameters and machine learning outputs
+│   └── Saved model outputs
 ├── Scatter_Plots/
-│   └── Visualizations comparing regression results
+│   └── Regression visualizations
 ├── Linear_Regression_Poster.png
 ├── Methods of Linear Regression Documentation.docx
 └── linear_regression_housing.py
@@ -313,11 +355,7 @@ The implementation does not currently use an automatic convergence criterion or 
 
 ## Running the Project
 
-### Requirements
-
-Python 3.8+
-
-Install the required dependencies:
+### Install dependencies
 
 ```bash
 pip install numpy pandas matplotlib scikit-learn
@@ -329,35 +367,37 @@ pip install numpy pandas matplotlib scikit-learn
 python linear_regression_housing.py
 ```
 
-The script will:
+The program:
 
-1. Load the Boston Housing dataset
-2. Extract the `RM` and `MEDV` features
-3. Calculate the regression parameters using covariance and variance
-4. Calculate the regression parameters using the normal equation
-5. Train a regression model using gradient descent
-6. Compare the resulting parameters
-7. Generate visualizations
-8. Save model-related outputs
-
----
-
-## Project Documentation
-
-For a detailed explanation of the mathematical derivations, implementation decisions, complexity analysis, results, and limitations, see:
-
-**[Methods of Linear Regression Documentation](./Methods%20of%20Linear%20Regression%20Documentation.docx)**
-
-The project poster is also included in the repository:
-
-**[Linear Regression Poster](./Linear_Regression_Poster.png)**
+1. Loads the dataset
+2. Extracts the input and target variables
+3. Calculates the analytical regression solution
+4. Calculates the matrix-based solution
+5. Trains the gradient descent model
+6. Compares the resulting parameters
+7. Generates visualizations
+8. Saves model outputs
 
 ---
 
-## Conclusion
+## Documentation
 
-This project compares three different implementations of linear regression to demonstrate that the same mathematical objective can be approached through statistical formulas, matrix algebra, or iterative optimization.
+For the full mathematical derivations, complexity analysis, results, and limitations:
 
-For the low-dimensional problem used here, the analytical methods are the most direct and computationally efficient. However, gradient descent provides a more flexible optimization framework as the dimensionality of a problem increases.
+📄 [Read the full technical documentation](./Methods%20of%20Linear%20Regression%20Documentation.docx)
 
-The primary goal of this project was therefore not to produce the most accurate housing price model, but to understand the mathematical foundations, implementation tradeoffs, and scalability considerations behind different approaches to linear regression.
+🖼️ [View the project poster](./Linear_Regression_Poster.png)
+
+---
+
+## Key Takeaway
+
+The most important lesson from this project was not that one regression implementation is universally better than the others.
+
+The lesson was that **the best algorithm depends on the structure of the problem**.
+
+For a low-dimensional regression problem, a closed-form solution can be simple and efficient.
+
+As the dimensionality and complexity of the problem increase, iterative optimization methods such as gradient descent can offer a more scalable alternative.
+
+This project was an exercise in understanding that tradeoff by implementing the underlying algorithms rather than treating linear regression as a black box.
